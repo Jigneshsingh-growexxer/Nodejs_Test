@@ -29,7 +29,6 @@ This project is a RESTful API for a Multi-functional Product Management and Orde
 
 - Image uploads using Multer.
 - Nodemailer for email notifications.
-- Swagger documentation.
 
 ## Installation
 
