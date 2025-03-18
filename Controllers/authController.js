@@ -5,13 +5,13 @@ import sendEmail from "../Utils/email.js";
 import { catchAsync } from "../Utils/catchAsync.js";
 import AppError from "../Utils/appError.js";
 
-export const register = catchAsync(async (req, res) => {
+export const register = catchAsync(async (req, res, next) => {
   const { name, email, password, userType } = req.body;
 
   const user = await Users.findOne({ email });
 
   if (user) {
-    return new AppError("Email already exixts ", 400);
+    return next(new AppError("Email already exixts ", 400));
   }
 
   const hashedPassword = await bcrypt.hash(password.trim(), 10);
@@ -37,20 +37,20 @@ export const register = catchAsync(async (req, res) => {
   });
 });
 
-export const login = catchAsync(async (req, res) => {
+export const login = catchAsync(async (req, res, next) => {
   const { email, password } = req.body;
   const user = await Users.findOne({ email });
 
   if (!user) {
-    return new AppError("Invalid email", 400);
+    return next(new AppError("Invalid email", 400));
   }
 
   if (!password || !user.password) {
-    return new AppError("Password is required", 400);
+    return next(new AppError("Password is required", 400));
   }
 
   if (!(await bcrypt.compare(password, user.password))) {
-    return new AppError("Invalid password", 400);
+    return next(new AppError("Invalid password", 400));
   }
 
   const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
@@ -64,11 +64,11 @@ export const login = catchAsync(async (req, res) => {
   });
 });
 
-export const forgetPassword = catchAsync(async (req, res) => {
+export const forgetPassword = catchAsync(async (req, res, next) => {
   const { email } = req.body;
   const user = await Users.findOne({ email });
   if (!user) {
-    return new AppError("User not Found", 404);
+    return next(new AppError("User not Found", 404));
   }
 
   const resetToken = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
@@ -90,7 +90,7 @@ export const forgetPassword = catchAsync(async (req, res) => {
     .json({ success: true, message: "Password reset link sent to email" });
 });
 
-export const resetPassword = catchAsync(async (req, res) => {
+export const resetPassword = catchAsync(async (req, res, next) => {
   const { token } = req.params;
   const { password } = req.body;
 
@@ -98,7 +98,7 @@ export const resetPassword = catchAsync(async (req, res) => {
 
   const user = await Users.findById(decoded.id);
   if (!user) {
-    return new AppError("User not Found", 404);
+    return next(new AppError("User not Found", 404));
   }
 
   const hashedPassword = await bcrypt.hash(password, 10);
